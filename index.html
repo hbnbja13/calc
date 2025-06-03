@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        .add-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            padding: 7px 14px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .top-div {
+            display: grid;
+            grid-template-columns: 1fr 4fr 1fr 1fr 4fr 1fr;
+            grid-auto-rows: 60px;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding-top: 40px;
+        }
+        .bottom-div {
+            height: 80px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        .grid-item {
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            user-select: none;
+        }
+        .grid-item.col-1,
+        .grid-item.col-4 {
+            background-color: #ffb6c1;
+            color: #b71c1c;
+            font-weight: bold;
+            font-size: 1.7em;
+        }
+        .grid-item.col-3,
+        .grid-item.col-6 {
+            background-color: #add8e6;
+            color: #01579b;
+            font-weight: bold;
+            font-size: 1.7em;
+        }
+        .grid-item.col-2,
+        .grid-item.col-5 {
+            background-color: #f0f0f0;
+            color: #333;
+            font-weight: bold;
+        }
+        .grid-item.clickable {
+            cursor: pointer;
+            transition: box-shadow 0.1s;
+        }
+        .grid-item.clickable:hover {
+            box-shadow: 0 0 0 2px #ffa500 inset;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 5px; }
+            .top-div {
+                grid-template-columns: 1fr 4fr 1fr 1fr 4fr 1fr;
+                grid-auto-rows: 40px;
+                padding-top: 50px;
+            }
+            .add-button {
+                font-size: 0.9em;
+                padding: 4px 10px;
+                top: 3px;
+                left: 3px;
+            }
+            .bottom-div {
+                height: 55px;
+                font-size: 1.1em;
+            }
+            .grid-item {
+                font-size: 1em;
+                padding: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="add-button" onclick="addRow()">Add Row</button>
+        <div class="top-div" id="grid"></div>
+        <div class="bottom-div" id="result">Total: 0</div>
+    </div>
+    <script>
+        let rowNumbers = {};
+
+        function calculateTotal() {
+            let total = 0;
+            
+            // Loop through each row
+            for (const row in rowNumbers) {
+                // For each row, multiply col 2 and col 5 values and add to total
+                const rowTotal = rowNumbers[row][2] * rowNumbers[row][5];
+                total += rowTotal;
+            }
+            
+            // Update the bottom div with the total
+            document.getElementById('result').textContent = `Total: ${total}`;
+            return total;
+        }
+
+        function createCell(row, col) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-item col-' + col;
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            if (col === 1 || col === 4) {
+                cell.textContent = '−';
+            } else if (col === 3 || col === 6) {
+                cell.textContent = '+';
+            } else if (col === 2 || col === 5) {
+                if (!rowNumbers[row]) rowNumbers[row] = {2: 0, 5: 0};
+                cell.textContent = rowNumbers[row][col];
+                cell.classList.add('number-cell');
+            }
+
+            cell.classList.add('clickable');
+            
+            if (col === 1 || col === 3 || col === 4 || col === 6) {
+                cell.addEventListener('click', function() {
+                    handleSignClick(row, col);
+                });
+            } else if (col === 2 || col === 5) {
+                cell.addEventListener('click', function() {
+                    handleNumberClick(row, col);
+                });
+            }
+            
+            return cell;
+        }
+
+        function updateNumberCell(row, col) {
+            const grid = document.getElementById('grid');
+            const idx = (row - 1) * 6 + (col - 1);
+            const cell = grid.children[idx];
+            cell.textContent = rowNumbers[row][col];
+            
+            // After updating a cell, recalculate the total
+            calculateTotal();
+        }
+
+        function handleSignClick(row, col) {
+            if (col === 1) {
+                rowNumbers[row][2]--;
+                updateNumberCell(row, 2);
+            } else if (col === 3) {
+                rowNumbers[row][2]++;
+                updateNumberCell(row, 2);
+            } else if (col === 4) {
+                rowNumbers[row][5]--;
+                updateNumberCell(row, 5);
+            } else if (col === 6) {
+                rowNumbers[row][5]++;
+                updateNumberCell(row, 5);
+            }
+        }
+
+        function handleNumberClick(row, col) {
+            rowNumbers[row][col] += 5;
+            updateNumberCell(row, col);
+        }
+
+        function populateGrid(rows = 5) {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            rowNumbers = {};
+            for (let row = 1; row <= rows; row++) {
+                for (let col = 1; col <= 6; col++) {
+                    grid.appendChild(createCell(row, col));
+                }
+            }
+            // Initialize the total calculation
+            calculateTotal();
+        }
+
+        function addRow() {
+            const grid = document.getElementById('grid');
+            const rowCount = Math.floor(grid.childElementCount / 6) + 1;
+            
+            // Initialize data for new row
+            rowNumbers[rowCount] = {2: 0, 5: 0};
+            
+            for (let col = 1; col <= 6; col++) {
+                grid.appendChild(createCell(rowCount, col));
+            }
+            
+            // Recalculate total after adding a row
+            calculateTotal();
+        }
+
+        // Initialize the grid with 5 rows
+        populateGrid(5);
+    </script>
+</body>
+</html>
